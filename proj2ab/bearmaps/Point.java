@@ -1,5 +1,5 @@
 package bearmaps;
-
+/** This class is used to represent the point */
 public class Point {
 
     private double x;
