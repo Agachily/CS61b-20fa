@@ -2,7 +2,7 @@ package bearmaps;
 
 import java.util.List;
 
-public class KdTree {
+public class KDTree {
     public class Node {
         /* Children of this Node. */
         private Point point;
@@ -33,7 +33,7 @@ public class KdTree {
 
     private Node root = null;
 
-    public KdTree(List<Point> points) {
+    public KDTree(List<Point> points) {
         if (points == null) {
             throw new IllegalArgumentException("There should be elements in the passed in list");
         }
@@ -95,7 +95,8 @@ public class KdTree {
     }
 
 
-    public Point getNearestPoint(Point goal) {
+    public Point nearest(double x, double y) {
+        Point goal = new Point(x, y);
         Node best = nearest(root, goal, root, true);
         return best.point;
     }
@@ -110,8 +111,8 @@ public class KdTree {
         Point p6 = new Point(0, 5);
         Point p7 = new Point(4, 4);
 
-        KdTree kd = new KdTree(List.of(p1, p2, p3, p4, p5, p6, p7));
-        Point nearestPoint = kd.getNearestPoint(new Point(0, 7));
+        KDTree kd = new KDTree(List.of(p1, p2, p3, p4, p5, p6, p7));
+        Point nearestPoint = kd.nearest(0, 7);
         System.out.println(nearestPoint.getX());
         System.out.println(nearestPoint.getY());
     }

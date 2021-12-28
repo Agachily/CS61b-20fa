@@ -39,10 +39,10 @@ public class KDTreeTest {
         List<Point> points = generatePoints(1000);
         List<Point> testPoints = generatePoints(70);
         NaivePointSet naivePointSet = new NaivePointSet(points);
-        KdTree kdTree = new KdTree(points);
+        KDTree kdTree = new KDTree(points);
         for (Point p : testPoints) {
             Point expected = naivePointSet.nearest(p.getX(), p.getY());
-            Point real = kdTree.getNearestPoint(p);
+            Point real = kdTree.nearest(p.getX(), p.getY());
             assertEquals((int)expected.getX(), (int)real.getX());
             assertEquals((int)expected.getY(), (int)real.getY());
         }
@@ -53,7 +53,7 @@ public class KDTreeTest {
     public void testEfficiency() {
         List<Point> points = generatePoints(100000);
         NaivePointSet naivePointSet = new NaivePointSet(points);
-        KdTree kdTree = new KdTree(points);
+        KDTree kdTree = new KDTree(points);
         List<Point> testPoints = generatePoints(10000);
         long start = System.currentTimeMillis();
         for (Point p : testPoints) {
@@ -64,7 +64,7 @@ public class KDTreeTest {
 
         start = System.currentTimeMillis();
         for (Point p : testPoints) {
-            kdTree.getNearestPoint(p);
+            kdTree.nearest(p.getX(), p.getY());
         }
         end = System.currentTimeMillis();
         System.out.println("KDTree: " + (end - start) / 1000.0 + " seconds");
