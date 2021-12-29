@@ -8,9 +8,9 @@ import java.util.*;
  *  */
 public class ArrayHeapMinPQ<T> implements ExtrinsicMinPQ<T> {
     class Node {
-        T item;
-        double priority;
-        int index;
+        private T item;
+        private double priority;
+        private int index;
 
         private Node(T item, double priority, int index) {
             this.item = item;
@@ -53,6 +53,9 @@ public class ArrayHeapMinPQ<T> implements ExtrinsicMinPQ<T> {
 
     @Override
     public void add(T item, double priority) {
+        if (contains(item)) {
+            throw new IllegalArgumentException();
+        }
         int size = size();
         if (size == 0) {
             Node node = new Node(item, priority, 1);
@@ -61,23 +64,29 @@ public class ArrayHeapMinPQ<T> implements ExtrinsicMinPQ<T> {
         } else {
             Node node = new Node(item, priority, size + 1);
             pQ.add(size + 1, node);
+            itemMap.put(node.getItem(), size + 1);
             swimUp(node);
-            itemMap.put(item, size + 1);
         }
         this.size++;
     }
 
     private void swimUp(Node node) {
-        Node parent = pQ.get(node.getIndex() / 2);
+        int parentIndex = node.getIndex() / 2;
+        if (parentIndex < 1) {
+            return;
+        }
+        Node parent = pQ.get(parentIndex);
         while (node.getPriority() < parent.getPriority()) {
             int nodeIndex = node.getIndex();
-            int parentIndex = parent.getIndex();
+            parentIndex = parent.getIndex();
             node.setIndex(parentIndex);
             parent.setIndex(nodeIndex);
             pQ.set(parentIndex, node);
             pQ.set(nodeIndex, parent);
+            updateIndex(parent);
             parent = pQ.get(node.getIndex() / 2);
         }
+        updateIndex(node);
     }
 
     @Override
@@ -87,20 +96,28 @@ public class ArrayHeapMinPQ<T> implements ExtrinsicMinPQ<T> {
 
     @Override
     public T getSmallest() {
+        if (size() < 1) {
+            throw new NoSuchElementException();
+        }
         return pQ.get(1).item;
     }
 
     @Override
     public T removeSmallest() {
-        T smallest = getSmallest();
+        T smallest;
+        try {
+            smallest = getSmallest();
+        } catch (NoSuchElementException e) {
+            throw new NoSuchElementException();
+        }
         int size = size();
+        this.size--;
+        itemMap.remove(smallest);
         Node lastNode = pQ.get(size);
         pQ.set(1, lastNode);
         lastNode.setIndex(1);
         pQ.set(size, null);
-        this.size--;
         sink(lastNode);
-        itemMap.remove(smallest);
         return smallest;
     }
 
@@ -109,74 +126,85 @@ public class ArrayHeapMinPQ<T> implements ExtrinsicMinPQ<T> {
         itemMap.put(node.item, node.getIndex());
     }
 
+    private void leftSink(Node node, Node leftChild) {
+        int leftChildIndex = leftChild.getIndex();
+        pQ.set(node.getIndex(), leftChild);
+        pQ.set(leftChild.getIndex(), node);
+        leftChild.setIndex(node.getIndex());
+        node.setIndex(leftChildIndex);
+        updateIndex(leftChild);
+        updateIndex(node);
+    }
+
+    private void rightSink(Node node, Node rightChild) {
+        int rightChildIndex = rightChild.getIndex();
+        pQ.set(node.getIndex(), rightChild);
+        pQ.set(rightChild.getIndex(), node);
+        rightChild.setIndex(node.getIndex());
+        node.setIndex(rightChildIndex);
+        updateIndex(rightChild);
+        updateIndex(node);
+        sink(node);
+    }
+
     private void sink(Node node) {
         int leftChildIndex = node.getIndex() * 2;
         int rightChildIndex = node.getIndex() * 2 + 1;
-        Node leftChild = null;
+        Node leftChild;
         Node rightChild = null;
-        if (leftChildIndex <= size()) {
+        if (leftChildIndex > this.size) {
+            return;
+        } else {
             leftChild = pQ.get(leftChildIndex);
+            if (rightChildIndex <= this.size) {
+                rightChild = pQ.get(rightChildIndex);
+            }
         }
-        if (rightChildIndex <= size()) {
-            rightChild = pQ.get(rightChildIndex);
+        if (rightChild == null && leftChild.getPriority() > node.getPriority()) {
+            return;
         }
-        if (leftChild == null && rightChild == null) {
+        if (rightChild == null && leftChild.getPriority() <= node.getPriority()) {
+            leftSink(node, leftChild);
             return;
         }
         if (leftChild.getPriority() >= node.getPriority() && rightChild.getPriority() >= node.getPriority()) {
             return;
         }
-        if (leftChild.getPriority() > rightChild.getPriority() || leftChild == null) {
-            pQ.set(node.getIndex(), rightChild);
-            pQ.set(rightChild.getIndex(), node);
-            rightChild.setIndex(node.getIndex());
-            node.setIndex(rightChildIndex);
-            updateIndex(rightChild);
-            updateIndex(node);
+        if (leftChild.getPriority() > rightChild.getPriority()) {
+            rightSink(node, rightChild);
             sink(node);
+            return;
         }
-        if (leftChild.getPriority() <= rightChild.getPriority() || rightChild == null) {
-            pQ.set(node.getIndex(), leftChild);
-            pQ.set(leftChild.getIndex(), node);
-            leftChild.setIndex(node.getIndex());
-            node.setIndex(leftChildIndex);
-            updateIndex(leftChild);
-            updateIndex(node);
+        if (leftChild.getPriority() <= rightChild.getPriority()) {
+            leftSink(node, leftChild);
             sink(node);
         }
     }
 
     @Override
     public int size() {
-        return size;
+        return this.size;
     }
 
     @Override
     public void changePriority(T item, double priority) {
+        if (!itemMap.containsKey(item)) {
+            throw new NoSuchElementException();
+        }
         int index = itemMap.get(item);
         Node targetNode = pQ.get(index);
         targetNode.setPriority(priority);
+        /* Rearrange the node after changing its priority */
+        int parentIndex = targetNode.getIndex() / 2;
+        swimUp(targetNode);
+        sink(targetNode);
     }
 
-    public static void main(String[] args) {
-        ArrayHeapMinPQ<String> pq = new ArrayHeapMinPQ<>();
-        pq.add("Tim", 1);
-        pq.add("Carol", 5);
-        pq.add("Bob", 1);
-        pq.add("Kate", 6);
-        pq.add("Yoshiki", 5);
-        pq.add("Tosh", 6);
-        pq.add("Sen", 3);
-        pq.add("Lin", 7);
-        pq.add("Hai", 7);
-        pq.add("Kiwi", 8);
-        pq.add("Sil", 3);
-        pq.add("Doom", 5);
-        pq.removeSmallest();
-        pq.removeSmallest();
-        pq.removeSmallest();
-        pq.removeSmallest();
-        pq.removeSmallest();
-        PrintHeapDemo.printFancyHeapDrawing(pq.pQ.toArray());
+    private Object[] covertPQtoArray() {
+        Object[] items = new Object[size()];
+        for (int i = 1; i <= size(); i++) {
+            items[i-1] = pQ.get(i).item;
+        }
+        return items;
     }
 }
