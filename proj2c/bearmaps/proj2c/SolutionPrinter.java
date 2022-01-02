@@ -28,7 +28,8 @@ public class SolutionPrinter {
     private static <Vertex> String solutionString(ShortestPathsSolver<Vertex> solver,
                                                   String delimiter) {
         List<String> solutionVertices = new ArrayList<>();
-        for (Vertex v : solver.solution()) {
+        List<Vertex> solution = solver.solution();
+        for (Vertex v : solution) {
             solutionVertices.add(v.toString());
         }
         return String.join(delimiter, solutionVertices);
