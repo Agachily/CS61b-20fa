@@ -71,30 +71,6 @@ public class AStarSolver<Vertex> implements ShortestPathsSolver<Vertex> {
         totalTime = sw.elapsedTime();
     }
 
-
-    public SolverOutcome outcome() {
-        return outcome;
-    }
-
-    public List<Vertex> solution() {
-        if (outcome == SolverOutcome.UNSOLVABLE || outcome == SolverOutcome.TIMEOUT) {
-            return solution;
-        } else {
-            solution.clear();
-            Collections.reverse(solutionHelper(edgeTo, end));
-            return solution;
-        }
-    }
-
-    // Get a list of vertices corresponding to a solution from the edgeTO map
-    private List<Vertex> solutionHelper(Map<Vertex, Vertex> edgeTo, Vertex endVertex) {
-        if (endVertex == null) {
-            return solution;
-        }
-        solution.add(endVertex);
-        return solutionHelper(edgeTo, edgeTo.get(endVertex));
-    }
-
     private void relax(WeightedEdge<Vertex> v) {
         Vertex fromVertex = v.from();
         Vertex toVertex = v.to();
@@ -120,6 +96,29 @@ public class AStarSolver<Vertex> implements ShortestPathsSolver<Vertex> {
         } else {
             pQ.add(toVertex, distTo.get(toVertex) + estimatedDistFromToVertexToGoal);
         }
+    }
+
+    public SolverOutcome outcome() {
+        return outcome;
+    }
+
+    public List<Vertex> solution() {
+        if (outcome == SolverOutcome.UNSOLVABLE || outcome == SolverOutcome.TIMEOUT) {
+            return solution;
+        } else {
+            solution.clear();
+            Collections.reverse(solutionHelper(edgeTo, end));
+            return solution;
+        }
+    }
+
+    // Get a list of vertices corresponding to a solution from the edgeTO map
+    private List<Vertex> solutionHelper(Map<Vertex, Vertex> edgeTo, Vertex endVertex) {
+        if (endVertex == null) {
+            return solution;
+        }
+        solution.add(endVertex);
+        return solutionHelper(edgeTo, edgeTo.get(endVertex));
     }
 
     public double solutionWeight() {
