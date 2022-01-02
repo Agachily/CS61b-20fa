@@ -4,8 +4,6 @@ import bearmaps.proj2ab.ArrayHeapMinPQ;
 import bearmaps.proj2ab.DoubleMapPQ;
 import bearmaps.proj2ab.ExtrinsicMinPQ;
 import edu.princeton.cs.algs4.Stopwatch;
-
-import java.lang.invoke.VolatileCallSite;
 import java.util.*;
 
 
@@ -29,8 +27,8 @@ public class AStarSolver<Vertex> implements ShortestPathsSolver<Vertex> {
         this.end = end;
         this.timeout = timeout;
         // Priority p = v's distance + heuristic distance
-        this.pQ = new DoubleMapPQ<>();
-        // this.pQ = new ArrayHeapMinPQ<>();
+        //this.pQ = new DoubleMapPQ<>();
+        this.pQ = new ArrayHeapMinPQ<>();
         solution = new ArrayList<>();
         distTo = new HashMap<>();
         edgeTo = new HashMap<>();
@@ -40,7 +38,7 @@ public class AStarSolver<Vertex> implements ShortestPathsSolver<Vertex> {
 
         // Insert the source vertex into pQ
         double estimatedDist = input.estimatedDistanceToGoal(start, end);
-        pQ.add(start, estimatedDist + 0);
+        pQ.add(start, estimatedDist);
 
         /* Calculate the shortest path.
            Repeat until the pQ is empty, pQ.getSmallest() is the goal or timeout is exceeded */
@@ -56,11 +54,11 @@ public class AStarSolver<Vertex> implements ShortestPathsSolver<Vertex> {
             }
 
             // Check whether run out of time
-            if (sw.elapsedTime() > timeout) {
-                outcome = SolverOutcome.TIMEOUT;
-                totalTime = sw.elapsedTime();
-                return;
-            }
+//            if (sw.elapsedTime() > timeout) {
+//                outcome = SolverOutcome.TIMEOUT;
+//                totalTime = sw.elapsedTime();
+//                return;
+//            }
 
             List<WeightedEdge<Vertex>> neighbors = input.neighbors(currentSmallest);
             for (WeightedEdge<Vertex> vertex : neighbors) {
@@ -105,17 +103,22 @@ public class AStarSolver<Vertex> implements ShortestPathsSolver<Vertex> {
         double estimatedDistFromToVertexToGoal = input.estimatedDistanceToGoal(toVertex, end);
 
         if (!distTo.containsKey(toVertex)) {
-            distTo.put(toVertex, Double.MAX_VALUE);
+            distTo.put(toVertex, newDist);
+            relaxHelper(fromVertex, toVertex, estimatedDistFromToVertexToGoal);
         }
 
         if (newDist < distTo.get(toVertex)) {
             distTo.replace(toVertex, newDist);
-            edgeTo.put(toVertex, fromVertex);
-            if (pQ.contains(toVertex)) {
-                pQ.changePriority(toVertex, distTo.get(toVertex) + estimatedDistFromToVertexToGoal);
-            } else {
-                pQ.add(toVertex, estimatedDistFromToVertexToGoal);
-            }
+            relaxHelper(fromVertex, toVertex, estimatedDistFromToVertexToGoal);
+        }
+    }
+
+    private void relaxHelper(Vertex fromVertex, Vertex toVertex, double estimatedDistFromToVertexToGoal) {
+        edgeTo.put(toVertex, fromVertex);
+        if (pQ.contains(toVertex)) {
+            pQ.changePriority(toVertex, distTo.get(toVertex) + estimatedDistFromToVertexToGoal);
+        } else {
+            pQ.add(toVertex, distTo.get(toVertex) + estimatedDistFromToVertexToGoal);
         }
     }
 
