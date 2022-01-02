@@ -54,11 +54,11 @@ public class AStarSolver<Vertex> implements ShortestPathsSolver<Vertex> {
             }
 
             // Check whether run out of time
-//            if (sw.elapsedTime() > timeout) {
-//                outcome = SolverOutcome.TIMEOUT;
-//                totalTime = sw.elapsedTime();
-//                return;
-//            }
+            if (sw.elapsedTime() > timeout) {
+                outcome = SolverOutcome.TIMEOUT;
+                totalTime = sw.elapsedTime();
+                return;
+            }
 
             List<WeightedEdge<Vertex>> neighbors = input.neighbors(currentSmallest);
             for (WeightedEdge<Vertex> vertex : neighbors) {
