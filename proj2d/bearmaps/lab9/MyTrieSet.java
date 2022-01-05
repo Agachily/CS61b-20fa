@@ -199,5 +199,4 @@ public class MyTrieSet implements TrieSet61B {
         }
         return prefix;
     }
-
 }
