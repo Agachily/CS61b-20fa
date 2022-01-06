@@ -19,7 +19,7 @@ public class AugmentedStreetMapGraph extends StreetMapGraph {
     private KDTree kdTree;
     Map<Point, Long> map = new HashMap<>();
     MyTrieSet trieSet;
-    private Map<String, List<String>> cleanedNameToNodes;
+    private Map<String, List<Node>> cleanedNameToNodes;
 
     public AugmentedStreetMapGraph(String dbPath) {
         super(dbPath);
@@ -28,7 +28,7 @@ public class AugmentedStreetMapGraph extends StreetMapGraph {
         List<Point> points = new ArrayList<>();
         trieSet = new MyTrieSet();
         cleanedNameToNodes = new HashMap<>();
-        List<String> nodesList;
+        List<Node> nodesList;
 
         for (Node node : nodes) {
             /* If the node has a name, clean it, then add it to the trieSet,
@@ -39,12 +39,12 @@ public class AugmentedStreetMapGraph extends StreetMapGraph {
                 trieSet.add(cleanedName);
 
                 if (!cleanedNameToNodes.containsKey(cleanedName)) {
-                    LinkedList<String> list = new LinkedList<>();
-                    list.add(nodeName);
+                    LinkedList<Node> list = new LinkedList<>();
+                    list.add(node);
                     cleanedNameToNodes.put(cleanedName, list);
                 } else {
                     nodesList = cleanedNameToNodes.get(cleanedName);
-                    nodesList.add(nodeName);
+                    nodesList.add(node);
                     cleanedNameToNodes.put(cleanedName, nodesList);
                 }
             }
@@ -88,7 +88,10 @@ public class AugmentedStreetMapGraph extends StreetMapGraph {
         List<String> matchedCleanNames = trieSet.keysWithPrefix(cleanedPrefix);
 
         for (String name : matchedCleanNames) {
-            locationsSet.addAll(cleanedNameToNodes.get(name));
+            List<Node> nodes = cleanedNameToNodes.get(name);
+            for (Node node : nodes) {
+                locationsSet.add(node.name());
+            }
         }
 
         return new LinkedList<>(locationsSet);
@@ -108,7 +111,21 @@ public class AugmentedStreetMapGraph extends StreetMapGraph {
      * "id" -> Number, The id of the node. <br>
      */
     public List<Map<String, Object>> getLocations(String locationName) {
-        return new LinkedList<>();
+        String cleanedName = cleanString(locationName);
+        List<Map<String, Object>> targetNode = new ArrayList<>();
+
+        if (cleanedNameToNodes.containsKey(cleanedName)) {
+            for (Node node : cleanedNameToNodes.get(cleanedName)) {
+                Map<String, Object> locationInfo = new HashMap<>();
+                locationInfo.put("id", node.id());
+                locationInfo.put("name", node.name());
+                locationInfo.put("lon", node.lon());
+                locationInfo.put("lat", node.lat());
+                targetNode.add(locationInfo);
+            }
+        }
+
+        return targetNode;
     }
 
 

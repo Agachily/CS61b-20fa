@@ -12,8 +12,8 @@ public class MyTrieSet implements TrieSet61B {
     private class Node {
         private char content;
         private boolean isEnd;
-        Map<Character, Node> subNodes;
-        List<Node> allSubNodes;
+        private Map<Character, Node> subNodes;
+        private List<Node> allSubNodes;
 
         // Create a sentinel node as the root
         Node() {

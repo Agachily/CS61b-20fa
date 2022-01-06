@@ -1,7 +1,9 @@
 package bearmaps.proj2d;
 
 import bearmaps.proj2c.AStarSolver;
+import bearmaps.proj2c.WeightedEdge;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -34,6 +36,48 @@ public class Router {
     }
 
     /**
+     * Return a list of WeightedEdge that connected every two adjacent vertices in route.
+     *
+     * @param g AugmentedStreetMapGraph
+     * @param route A list of passing nodes
+     * @return List<WeightedEdge<Long>>
+     */
+    private static List<WeightedEdge<Long>> getPassedWays(AugmentedStreetMapGraph g, List<Long> route) {
+        List<WeightedEdge<Long>> ways = new ArrayList<>();
+        long currVertex;
+        long nextVertex;
+        for (int i = 1; i < route.size(); i += 1) {
+            currVertex = route.get(i - 1);
+            nextVertex = route.get(i);
+            for (WeightedEdge<Long> edge : g.neighbors(currVertex)) {
+                if (edge.to().equals(nextVertex)) {
+                    ways.add(edge);
+                }
+            }
+        }
+        return ways;
+    }
+
+
+    private static NavigationDirection setNaviObject(int direction, String way, double distance) {
+        NavigationDirection naviDir = new NavigationDirection();
+        naviDir.direction = direction;
+        naviDir.way = way;
+        naviDir.distance = distance;
+        return naviDir;
+    }
+
+    /**
+     * Return coordinates of an vertex in the form of an array [lon, lat].
+     */
+    private static double[] getPos(AugmentedStreetMapGraph g, long vertex) {
+        double[] pos = new double[2];
+        pos[0] = g.lon(vertex);
+        pos[1] = g.lat(vertex);
+        return pos;
+    }
+
+    /**
      * Create the list of directions corresponding to a route on the graph.
      * @param g The graph to use.
      * @param route The route to translate into directions. Each element
@@ -43,8 +87,53 @@ public class Router {
      */
     public static List<NavigationDirection> routeDirections(AugmentedStreetMapGraph g,
                                                             List<Long> route) {
-        /* fill in for part IV */
-        return null;
+        List<NavigationDirection> navigationDirections =  new ArrayList<>();
+        List<WeightedEdge<Long>> passedWays = getPassedWays(g, route);
+        WeightedEdge<Long> previousWay;
+        WeightedEdge<Long> currentWay;
+        int direction = 0;
+        NavigationDirection naviObject = setNaviObject(direction, passedWays.get(0).getName(), passedWays.get(0).weight());
+
+        if (passedWays.size() == 1) {
+            navigationDirections.add(naviObject);
+            return navigationDirections;
+        }
+
+        for (int i = 1; i < passedWays.size(); i++) {
+            previousWay = passedWays.get(i - 1);
+            currentWay = passedWays.get(i);
+
+            long prevVertex = previousWay.from();
+            long currVertex = previousWay.to();
+            long nextVertex = currentWay.to();
+
+            /* Get the coordinates corresponding to vertex */
+            double[] prevPos = getPos(g, prevVertex);
+            double[] currPos = getPos(g, currVertex);
+            double[] nextPos = getPos(g, nextVertex);
+
+            /* If the way has no name, set its name to "unknown road". */
+            String prevWayName = previousWay.getName() != null ? previousWay.getName() : "unknown road";
+            String currWayName = currentWay.getName() != null ? currentWay.getName() : "unknown road";
+
+            if (currWayName.equals(prevWayName)) {
+                naviObject.distance += currentWay.weight();
+            } else {
+                navigationDirections.add(naviObject);
+                /* Decide the direction by calculating the bearing */
+                double previousBearing = NavigationDirection.bearing(prevPos[0], currPos[0], prevPos[1], currPos[1]);
+                double currentBearing = NavigationDirection.bearing(currPos[0], nextPos[0], currPos[1], nextPos[1]);
+                direction = NavigationDirection.getDirection(previousBearing, currentBearing);
+
+                /* Set the new navigation object */
+                naviObject = setNaviObject(direction, currentWay.getName(), currentWay.weight());
+            }
+
+            if ( i == passedWays.size() - 1) {
+                navigationDirections.add(naviObject);
+            }
+        }
+        return navigationDirections;
     }
 
     /**
